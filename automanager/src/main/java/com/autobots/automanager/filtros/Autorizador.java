@@ -1,49 +1,42 @@
 package com.autobots.automanager.filtros;
 
 import java.io.IOException;
-
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-
+import com.autobots.automanager.adaptadores.UserDetailsServiceImpl;
 import com.autobots.automanager.jwt.ProvedorJwt;
 
 public class Autorizador extends BasicAuthenticationFilter {
 
 	private ProvedorJwt provedorJwt;
-	private UserDetailsService servico;
-	private ValidadorCabecalho validador;
-	private AnalisadorCabecalho analisador;
-	private AutenticadorJwt autenticadorJwt;
+	private UserDetailsServiceImpl servico;
 
 	public Autorizador(AuthenticationManager gerenciadorAutenticacao, ProvedorJwt provedorJwt,
-			UserDetailsService servico) {
+			UserDetailsServiceImpl servico) {
 		super(gerenciadorAutenticacao);
-		this.servico = servico;
 		this.provedorJwt = provedorJwt;
+		this.servico = servico;
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+	protected void doFilterInternal(HttpServletRequest requisicao, HttpServletResponse resposta, FilterChain cadeia)
 			throws IOException, ServletException {
-		String cabecalho = request.getHeader("Authorization");
-		validador = new ValidadorCabecalho(cabecalho);
-		if (validador.validar()) {
-			analisador = new AnalisadorCabecalho(cabecalho);
-			String jwt = analisador.obterJwt();
-			autenticadorJwt = new AutenticadorJwt(jwt, provedorJwt, servico);
+		ValidadorCabecalho validador = new ValidadorCabecalho();
+		if (validador.validar(requisicao)) {
+			AnalisadorCabecalho analisador = new AnalisadorCabecalho();
+			String jwt = analisador.obterJwt(requisicao);
+			AutenticadorJwt autenticadorJwt = new AutenticadorJwt(jwt, provedorJwt, servico);
 			UsernamePasswordAuthenticationToken autenticacao = autenticadorJwt.obterAutenticacao();
 			if (autenticacao != null) {
 				SecurityContextHolder.getContext().setAuthentication(autenticacao);
 			}
 		}
-		chain.doFilter(request, response);
+		cadeia.doFilter(requisicao, resposta);
 	}
 }

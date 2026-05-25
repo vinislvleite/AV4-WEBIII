@@ -1,15 +1,16 @@
 package com.autobots.automanager.filtros;
 
-class AnalisadorCabecalho {
-	private String cabecalho;
+import javax.servlet.http.HttpServletRequest;
 
-	public AnalisadorCabecalho(String cabecalho) {
-		this.cabecalho = cabecalho;
-	}
+public class AnalisadorCabecalho {
+	private static final String CABECALHO = "Authorization";
+	private static final String PREFIXO = "Bearer ";
 
-	public String obterJwt() {
-		String[] partes = cabecalho.split(" ");
-		String jwt = partes[1];
-		return jwt;
+	public String obterJwt(HttpServletRequest requisicao) {
+		String cabecalho = requisicao.getHeader(CABECALHO);
+		if (cabecalho != null && cabecalho.startsWith(PREFIXO)) {
+			return cabecalho.substring(PREFIXO.length());
+		}
+		return null;
 	}
 }

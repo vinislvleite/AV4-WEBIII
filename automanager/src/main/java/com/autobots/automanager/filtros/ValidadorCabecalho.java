@@ -1,18 +1,13 @@
 package com.autobots.automanager.filtros;
 
-class ValidadorCabecalho {
-	private String cabecalho;
+import javax.servlet.http.HttpServletRequest;
 
-	public ValidadorCabecalho(String cabecalho) {
-		this.cabecalho = cabecalho;
+public class ValidadorCabecalho {
+	private static final String CABECALHO = "Authorization";
+	private static final String PREFIXO = "Bearer ";
+
+	public boolean validar(HttpServletRequest requisicao) {
+		String cabecalho = requisicao.getHeader(CABECALHO);
+		return cabecalho != null && cabecalho.startsWith(PREFIXO);
 	}
-
-	public boolean validar() {
-		if (cabecalho != null && cabecalho.startsWith("Bearer ")) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 }

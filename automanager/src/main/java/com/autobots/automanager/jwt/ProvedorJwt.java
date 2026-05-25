@@ -2,36 +2,38 @@ package com.autobots.automanager.jwt;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import io.jsonwebtoken.Claims;
-import lombok.Data;
 
-@Data
 @Component
 public class ProvedorJwt {
+
 	@Value("${jwt.secret}")
 	private String assinatura;
+
 	@Value("${jwt.expiration}")
-	private Long duracao;
+	private long duracao;
 
-	private GeradorJwt gerador;
-	private AnalisadorJwt analisador;
-	private ValidadorJwt validador;
-
-	public String proverJwt(String nomeUsuario) {
-		gerador = new GeradorJwt(assinatura, duracao);
+	public String gerarJwt(String nomeUsuario) {
+		GeradorJwt gerador = new GeradorJwt(assinatura, duracao);
 		return gerador.gerarJwt(nomeUsuario);
 	}
 
+	public Claims obterReivindicacoes(String jwt) {
+		AnalisadorJwt analisador = new AnalisadorJwt(assinatura);
+		return analisador.obterReivindicacoes(jwt);
+	}
+
 	public boolean validarJwt(String jwt) {
-		analisador = new AnalisadorJwt(assinatura, jwt);
-		validador = new ValidadorJwt();
-		return validador.validar(analisador.obterReivindicacoes());
+		Claims reivindicacoes = obterReivindicacoes(jwt);
+		ValidadorJwt validador = new ValidadorJwt();
+		return validador.validar(reivindicacoes);
 	}
 
 	public String obterNomeUsuario(String jwt) {
-		analisador = new AnalisadorJwt(assinatura, jwt);
-		Claims reivindicacoes = analisador.obterReivindicacoes();
-		return analisador.obterNomeUsuairo(reivindicacoes);
+		Claims reivindicacoes = obterReivindicacoes(jwt);
+		if (reivindicacoes != null) {
+			return reivindicacoes.getSubject();
+		}
+		return null;
 	}
 }

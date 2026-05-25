@@ -1,7 +1,6 @@
 package com.autobots.automanager.jwt;
 
 import java.util.Date;
-
 import io.jsonwebtoken.Claims;
 
 class ValidadorJwt {

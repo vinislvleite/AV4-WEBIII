@@ -1,21 +1,17 @@
 package com.autobots.automanager.filtros;
 
 import java.io.IOException;
-import java.util.ArrayList;
-
+import java.util.Map;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import com.autobots.automanager.entidades.Credencial;
 import com.autobots.automanager.jwt.ProvedorJwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,31 +23,30 @@ public class Autenticador extends UsernamePasswordAuthenticationFilter {
 	public Autenticador(AuthenticationManager gerenciadorAutenticacao, ProvedorJwt provedorJwt) {
 		this.gerenciadorAutenticacao = gerenciadorAutenticacao;
 		this.provedorJwt = provedorJwt;
+		setFilterProcessesUrl("/login");
 	}
 
 	@Override
-	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+	public Authentication attemptAuthentication(HttpServletRequest requisicao, HttpServletResponse resposta)
 			throws AuthenticationException {
-		Credencial credencial = null;
 		try {
-			credencial = new ObjectMapper().readValue(request.getInputStream(), Credencial.class);
+			Map<?, ?> credenciais = new ObjectMapper().readValue(requisicao.getInputStream(), Map.class);
+			String nomeUsuario = (String) credenciais.get("nomeUsuario");
+			String senha = (String) credenciais.get("senha");
+			UsernamePasswordAuthenticationToken autenticacao =
+					new UsernamePasswordAuthenticationToken(nomeUsuario, senha);
+			return gerenciadorAutenticacao.authenticate(autenticacao);
 		} catch (IOException e) {
-			credencial = new Credencial();
-			credencial.setNomeUsuario("");
-			credencial.setSenha("");
+			throw new RuntimeException("Falha ao autenticar usuario", e);
 		}
-		UsernamePasswordAuthenticationToken dadosAutenticacao = new UsernamePasswordAuthenticationToken(
-				credencial.getNomeUsuario(), credencial.getSenha(), new ArrayList<>());
-		Authentication autenticacao = gerenciadorAutenticacao.authenticate(dadosAutenticacao);
-		return autenticacao;
 	}
 
 	@Override
-	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
-			Authentication autenticacao) throws IOException, ServletException {
+	protected void successfulAuthentication(HttpServletRequest requisicao, HttpServletResponse resposta,
+			FilterChain cadeia, Authentication autenticacao) throws IOException, ServletException {
 		UserDetails usuario = (UserDetails) autenticacao.getPrincipal();
-		String nomeUsuario = usuario.getUsername();
-		String jwt = provedorJwt.proverJwt(nomeUsuario);
-		response.addHeader("Authorization", "Bearer " + jwt);
+		String jwt = provedorJwt.gerarJwt(usuario.getUsername());
+		resposta.addHeader("Authorization", "Bearer " + jwt);
+		resposta.addHeader("Access-Control-Expose-Headers", "Authorization");
 	}
 }

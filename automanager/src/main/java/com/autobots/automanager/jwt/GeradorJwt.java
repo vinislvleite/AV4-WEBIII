@@ -1,7 +1,6 @@
 package com.autobots.automanager.jwt;
 
 import java.util.Date;
-
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -15,8 +14,10 @@ class GeradorJwt {
 	}
 
 	public String gerarJwt(String nomeUsuario) {
-		String jwt = Jwts.builder().setSubject(nomeUsuario).setExpiration(this.expiracao)
-				.signWith(SignatureAlgorithm.HS512, this.assinatura.getBytes()).compact();
-		return jwt;
+		return Jwts.builder()
+				.setSubject(nomeUsuario)
+				.setExpiration(this.expiracao)
+				.signWith(SignatureAlgorithm.HS512, this.assinatura.getBytes())
+				.compact();
 	}
 }

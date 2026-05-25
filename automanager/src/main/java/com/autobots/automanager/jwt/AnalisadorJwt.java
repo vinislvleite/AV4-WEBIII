@@ -5,26 +5,19 @@ import io.jsonwebtoken.Jwts;
 
 class AnalisadorJwt {
 	private String assinatura;
-	private String jwt;
 
-	public AnalisadorJwt(String assinatura, String jwt) {
+	public AnalisadorJwt(String assinatura) {
 		this.assinatura = assinatura;
-		this.jwt = jwt;
 	}
 
-	public Claims obterReivindicacoes() {
+	public Claims obterReivindicacoes(String jwt) {
 		try {
-			return Jwts.parser().setSigningKey(assinatura.getBytes()).parseClaimsJws(jwt).getBody();
+			return Jwts.parser()
+					.setSigningKey(this.assinatura.getBytes())
+					.parseClaimsJws(jwt)
+					.getBody();
 		} catch (Exception e) {
 			return null;
 		}
-	}
-	
-	public String obterNomeUsuairo(Claims reivindicacoes) {
-		if (reivindicacoes != null) {
-			String nomeUsuario = reivindicacoes.getSubject();
-			return nomeUsuario;
-		}
-		return null;
 	}
 }
